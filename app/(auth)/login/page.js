@@ -29,16 +29,33 @@ export default function LoginPage() {
     setIsLoading(true);
     const supabase = getSupabaseBrowserClient();
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      let { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
+      // If email not confirmed in Supabase, auto-confirm and retry
+      if (error && error.message.toLowerCase().includes("email not confirmed")) {
+        const confirmRes = await fetch("/api/auth/confirm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        if (confirmRes.ok) {
+          const retry = await supabase.auth.signInWithPassword({ email, password });
+          data = retry.data;
+          error = retry.error;
+        }
+      }
+
       if (error) {
         toast.error(error.message);
       } else {
-        toast.success("Welcome back!");
-        router.push("/dashboard");
+        if (data?.user) {
+          await store.loadUserDataFromSupabase(data.user);
+        }
+        toast.success("Welcome back to Daybook!");
+        window.location.href = "/dashboard";
       }
     } catch (err) {
       toast.error("Failed to sign in.");

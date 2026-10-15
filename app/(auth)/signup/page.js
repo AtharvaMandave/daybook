@@ -44,30 +44,54 @@ export default function SignupPage() {
     setIsLoading(true);
 
     if (hasSupabase) {
-      const supabase = getSupabaseBrowserClient();
       try {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              full_name: fullName,
-              currency,
-              payday_day_of_month: parseInt(paydayDay, 10) || 30,
-            },
-          },
+        // 1. Call server signup endpoint (provisions user, auto-confirms email, creates profile & accounts)
+        const res = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            password,
+            fullName,
+            currency,
+            paydayDay: parseInt(paydayDay, 10) || 30,
+            accountName,
+            accountType,
+            openingBalance: parseFloat(openingBalance) || 0,
+          }),
         });
 
-        if (error) {
-          toast.error(error.message);
+        const json = await res.json();
+        if (!res.ok) {
+          toast.error(json.error || "Failed to set up account.");
           setIsLoading(false);
           return;
         }
 
-        toast.success("Account created successfully! Welcome to Daybook.");
-        router.push("/dashboard");
+        // 2. Establish live Supabase browser session
+        const supabase = getSupabaseBrowserClient();
+        if (supabase) {
+          const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+
+          if (authError) {
+            toast.error(authError.message);
+            setIsLoading(false);
+            return;
+          }
+
+          if (authData?.user) {
+            await store.loadUserDataFromSupabase(authData.user);
+          }
+        }
+
+        toast.success(`Welcome to Daybook, ${fullName || "User"}! Your cloud ledger is live.`);
+        window.location.href = "/dashboard";
       } catch (err) {
-        toast.error("Sign up failed.");
+        console.error("Signup error:", err);
+        toast.error("Sign up failed: " + (err.message || "Network error"));
         setIsLoading(false);
       }
     } else {

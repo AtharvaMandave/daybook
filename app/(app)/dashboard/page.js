@@ -66,8 +66,10 @@ export default function DashboardPage() {
     isPrivateMode,
   } = appState;
 
-  // Calculate Reference Date (October 2026 based on our demo timeline)
-  const referenceDate = new Date("2026-10-15T12:00:00");
+  // Dynamic Reference Date (October 2026 for demo timeline, real date for live cloud user)
+  const referenceDate = appState.isDemoMode
+    ? new Date("2026-10-15T12:00:00")
+    : new Date();
   const currentMonthStart = startOfMonth(referenceDate);
   const currentMonthEnd = endOfMonth(referenceDate);
 
@@ -85,42 +87,64 @@ export default function DashboardPage() {
   const safeToSpendData = calculateSafeToSpend({
     accounts,
     paydayConfig: {
-      isConfigured: profile.isPaydayConfigured,
-      dayOfMonth: profile.paydayDayOfMonth,
-      expectedPaydayIncome: profile.expectedPaydayIncome,
+      isConfigured: profile?.isPaydayConfigured !== false,
+      dayOfMonth: profile?.paydayDayOfMonth || 30,
+      expectedPaydayIncome: profile?.expectedPaydayIncome || 0,
     },
-    recurringBills: recurringRules,
-    plannedSavings: [{ amount: 15000, name: "Index Fund SIP" }],
+    recurringBills: recurringRules || [],
+    plannedSavings: appState.isDemoMode ? [{ amount: 15000, name: "Index Fund SIP" }] : [],
     recordedTransactions: transactions,
     referenceDate,
   });
 
   // 4. Budget Progress
   const budgetProgress = calculateBudgetsProgress(
-    budgets,
-    transactions,
+    budgets || [],
+    transactions || [],
     currentMonthStart,
     currentMonthEnd
   );
 
-  // 5. Daily spending trend data for Recharts
-  const chartData = [
-    { date: "Oct 1", spent: 4200 },
-    { date: "Oct 3", spent: 499 },
-    { date: "Oct 5", spent: 3990 },
-    { date: "Oct 7", spent: 1499 },
-    { date: "Oct 9", spent: 850 },
-    { date: "Oct 10", spent: 0 },
-    { date: "Oct 12", spent: 3200 },
-    { date: "Oct 14", spent: 2390 },
-    { date: "Oct 15", spent: 649 },
-  ];
+  // 5. Daily spending trend data
+  const chartData = appState.isDemoMode
+    ? [
+        { date: "Oct 1", spent: 4200 },
+        { date: "Oct 3", spent: 499 },
+        { date: "Oct 5", spent: 3990 },
+        { date: "Oct 7", spent: 1499 },
+        { date: "Oct 9", spent: 850 },
+        { date: "Oct 10", spent: 0 },
+        { date: "Oct 12", spent: 3200 },
+        { date: "Oct 14", spent: 2390 },
+        { date: "Oct 15", spent: 649 },
+      ]
+    : transactions.length > 0
+    ? Object.entries(
+        transactions
+          .filter((t) => t.type === "expense")
+          .reduce((acc, t) => {
+            const key = t.date?.slice(5) || "Today";
+            acc[key] = (acc[key] || 0) + Number(t.amount);
+            return acc;
+          }, {})
+      ).map(([date, spent]) => ({ date, spent }))
+    : [
+        { date: "Start", spent: 0 },
+        { date: "Today", spent: 0 },
+      ];
 
   // 6. Recent transactions (latest 5)
-  const recentTransactions = transactions.slice(0, 5);
+  const recentTransactions = (transactions || []).slice(0, 5);
 
   // 7. Upcoming payments from recurring and planned events
-  const upcomingPayments = safeToSpendData.upcomingItems.slice(0, 4);
+  const upcomingPayments = (safeToSpendData?.upcomingItems || []).slice(0, 4);
+
+  // User display name
+  const firstName = profile?.fullName
+    ? profile.fullName.trim().split(" ")[0]
+    : appState.user?.email
+    ? appState.user.email.split("@")[0]
+    : "Friend";
 
   return (
     <div className="space-y-6">
@@ -128,20 +152,24 @@ export default function DashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-4">
         <div>
           <h2 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">
-            Welcome back, {profile.fullName.split(" ")[0]}
+            Welcome back, {firstName}
           </h2>
           <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
             You have{" "}
             <span className="font-semibold text-foreground">
-              {safeToSpendData.daysUntilPayday || 15} days
+              {safeToSpendData.daysUntilPayday ?? 15} days
             </span>{" "}
-            until next payday on {safeToSpendData.nextPayday || "Oct 30, 2026"}.
+            until next payday on {safeToSpendData.nextPayday || "the 30th"}.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="default" className="text-xs py-1">
-            <span className="h-1.5 w-1.5 rounded-full bg-forest-600 animate-pulse" />
-            Financial Engine Active
+          <Badge variant={appState.isDemoMode ? "default" : "income"} className="text-xs py-1">
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                appState.isDemoMode ? "bg-forest-600 animate-pulse" : "bg-emerald-600 animate-pulse"
+              }`}
+            />
+            {appState.isDemoMode ? "Demo Financial Engine" : "Cloud Ledger Active"}
           </Badge>
         </div>
       </div>
@@ -181,7 +209,7 @@ export default function DashboardPage() {
               </button>
             </div>
             <Badge variant="default" className="text-[10px] bg-white border-sage-200">
-              Until Oct 30
+              Until {safeToSpendData.nextPayday ? safeToSpendData.nextPayday.split(",")[0] : "Payday"}
             </Badge>
           </div>
           <div className="mt-2">
@@ -202,10 +230,10 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        {/* October Income */}
+        {/* Monthly Income */}
         <Card className="bg-white">
           <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-medium">October Income</span>
+            <span className="text-xs font-medium">Monthly Income</span>
             <ArrowDownRight className="h-4 w-4 text-finance-income" />
           </div>
           <div className="mt-2">
@@ -213,15 +241,17 @@ export default function DashboardPage() {
               {formatCurrency(periodTotals.totalIncome, { isPrivate: isPrivateMode })}
             </p>
             <p className="text-[11px] text-finance-income mt-1 font-medium">
-              +₹1,35,000 recorded salary
+              {periodTotals.totalIncome > 0
+                ? `+₹${periodTotals.totalIncome.toLocaleString("en-IN")} recorded inflow`
+                : "No income recorded this period"}
             </p>
           </div>
         </Card>
 
-        {/* October Expenses */}
+        {/* Monthly Expenses */}
         <Card className="bg-white">
           <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-medium">October Spending</span>
+            <span className="text-xs font-medium">Monthly Spending</span>
             <ArrowUpRight className="h-4 w-4 text-finance-expense" />
           </div>
           <div className="mt-2">

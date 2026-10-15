@@ -20,6 +20,13 @@ export default function AppLayout({ children }) {
     return () => unsubscribe();
   }, []);
 
+  // Sync date: If authenticated in live mode, use real current date
+  useEffect(() => {
+    if (!appState.isDemoMode) {
+      setCurrentDate(new Date());
+    }
+  }, [appState.isDemoMode]);
+
   // Keyboard shortcut listener: Cmd+K or Ctrl+K opens quick add
   useEffect(() => {
     const handleKeyDown = (e) => {

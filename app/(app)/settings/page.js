@@ -91,24 +91,59 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      {/* Supabase Connection Status Banner */}
-      <Card className="border-sage-200 bg-surface-sage/30">
-        <div className="flex items-start justify-between">
+      {/* Account & Session Management Card */}
+      <Card className={appState.isDemoMode ? "border-sage-200 bg-surface-sage/30" : "border-emerald-200 bg-emerald-50/40"}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-3">
-            <Server className="h-5 w-5 text-forest-700 mt-0.5" />
+            <Server className={`h-5 w-5 mt-0.5 ${appState.isDemoMode ? "text-forest-700" : "text-emerald-700"}`} />
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-foreground">Backend & Storage Mode</h3>
-                <Badge variant={hasSupabase ? "income" : "default"}>
-                  {hasSupabase ? "Supabase PostgreSQL Active" : "Local Demo Mode Active"}
+                <h3 className="text-sm font-bold text-foreground">
+                  {appState.isDemoMode ? "Demo Mode (Local Offline Storage)" : "Supabase Cloud Database"}
+                </h3>
+                <Badge variant={appState.isDemoMode ? "default" : "income"}>
+                  {appState.isDemoMode ? "Local Demo" : "Live Cloud Active"}
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {hasSupabase
-                  ? "Connected to production Supabase database with Row Level Security."
-                  : "Currently running with local storage persistence and rich Indian sample finance data. To connect to your Supabase project, provide NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your environment."}
+                {appState.isDemoMode
+                  ? "You are currently exploring Daybook in Demo Mode with local browser storage. Sign up or log in to sync transactions permanently across devices."
+                  : `Authenticated as ${appState.profile?.fullName || "User"} (${appState.user?.email || appState.profile?.email}). All changes are saved to Supabase PostgreSQL.`}
               </p>
             </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {appState.isDemoMode ? (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => (window.location.href = "/login")}
+                >
+                  Sign In
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => (window.location.href = "/signup")}
+                >
+                  Create Account
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  store.signOut();
+                  toast.success("Signed out. Switched to Demo Mode.");
+                }}
+                className="text-finance-expense hover:text-finance-expense"
+              >
+                Sign Out to Demo
+              </Button>
+            )}
           </div>
         </div>
       </Card>
