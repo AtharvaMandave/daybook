@@ -344,18 +344,18 @@ export default function TransactionsPage() {
 
         {/* Filter Summary & Reset */}
         <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border/60 text-xs">
-          <div className="flex items-center gap-4 text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground">
             <span>
               Showing <strong className="text-foreground">{filteredTotals.count}</strong> transactions
             </span>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <span>
               Inflow:{" "}
               <strong className="text-finance-income tabular-nums">
                 {formatCurrency(filteredTotals.income, { isPrivate: isPrivateMode })}
               </strong>
             </span>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <span>
               Outflow:{" "}
               <strong className="text-finance-expense tabular-nums">
@@ -367,7 +367,7 @@ export default function TransactionsPage() {
           {(searchQuery || selectedType !== "all" || selectedCategory !== "all" || selectedAccount !== "all") && (
             <button
               onClick={resetFilters}
-              className="text-forest-700 font-medium hover:underline"
+              className="text-forest-700 font-medium hover:underline ml-auto"
             >
               Reset Filters
             </button>
@@ -385,121 +385,213 @@ export default function TransactionsPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-border bg-surface-warm text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  <th
-                    className="py-3 px-4 cursor-pointer hover:text-foreground"
-                    onClick={() => {
-                      if (sortField === "date") setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-                      else {
-                        setSortField("date");
-                        setSortOrder("desc");
-                      }
-                    }}
-                  >
-                    <div className="flex items-center gap-1">
-                      <span>Date</span>
-                      <ArrowUpDown className="h-3 w-3" />
-                    </div>
-                  </th>
-                  <th className="py-3 px-4">Description / Merchant</th>
-                  <th className="py-3 px-4">Category</th>
-                  <th className="py-3 px-4">Account & Method</th>
-                  <th
-                    className="py-3 px-4 text-right cursor-pointer hover:text-foreground"
-                    onClick={() => {
-                      if (sortField === "amount") setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-                      else {
-                        setSortField("amount");
-                        setSortOrder("desc");
-                      }
-                    }}
-                  >
-                    <div className="flex items-center justify-end gap-1">
-                      <span>Amount</span>
-                      <ArrowUpDown className="h-3 w-3" />
-                    </div>
-                  </th>
-                  <th className="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border text-xs">
-                {filteredTransactions.map((tx) => {
-                  const acc = accounts.find((a) => a.id === tx.accountId);
-                  const fromAcc = accounts.find((a) => a.id === tx.fromAccountId);
-                  const toAcc = accounts.find((a) => a.id === tx.toAccountId);
-
-                  return (
-                    <tr
-                      key={tx.id}
-                      className="hover:bg-surface-warm/60 transition-colors"
+          <>
+            {/* Desktop Table View (Hidden on mobile) */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-border bg-surface-warm text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    <th
+                      className="py-3 px-4 cursor-pointer hover:text-foreground"
+                      onClick={() => {
+                        if (sortField === "date") setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                        else {
+                          setSortField("date");
+                          setSortOrder("desc");
+                        }
+                      }}
                     >
-                      {/* Date */}
-                      <td className="py-3 px-4 text-muted-foreground font-mono whitespace-nowrap">
-                        {tx.date}
-                      </td>
+                      <div className="flex items-center gap-1">
+                        <span>Date</span>
+                        <ArrowUpDown className="h-3 w-3" />
+                      </div>
+                    </th>
+                    <th className="py-3 px-4">Description / Merchant</th>
+                    <th className="py-3 px-4">Category</th>
+                    <th className="py-3 px-4">Account & Method</th>
+                    <th
+                      className="py-3 px-4 text-right cursor-pointer hover:text-foreground"
+                      onClick={() => {
+                        if (sortField === "amount") setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                        else {
+                          setSortField("amount");
+                          setSortOrder("desc");
+                        }
+                      }}
+                    >
+                      <div className="flex items-center justify-end gap-1">
+                        <span>Amount</span>
+                        <ArrowUpDown className="h-3 w-3" />
+                      </div>
+                    </th>
+                    <th className="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border text-xs">
+                  {filteredTransactions.map((tx) => {
+                    const acc = accounts.find((a) => a.id === tx.accountId);
+                    const fromAcc = accounts.find((a) => a.id === tx.fromAccountId);
+                    const toAcc = accounts.find((a) => a.id === tx.toAccountId);
 
-                      {/* Description & tags */}
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-foreground">
+                    return (
+                      <tr
+                        key={tx.id}
+                        className="hover:bg-surface-warm/60 transition-colors"
+                      >
+                        {/* Date */}
+                        <td className="py-3 px-4 text-muted-foreground font-mono whitespace-nowrap">
+                          {tx.date}
+                        </td>
+
+                        {/* Description & tags */}
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-foreground">
+                              {tx.description}
+                            </span>
+                            {tx.isSplit && (
+                              <button
+                                onClick={() => setInspectingSplitTx(tx)}
+                                className="inline-flex items-center gap-1 text-[10px] bg-terracotta-50 text-terracotta-700 px-1.5 py-0.5 rounded border border-terracotta-200 hover:bg-terracotta-100"
+                                title="Click to view split details"
+                              >
+                                <Split className="h-2.5 w-2.5" />
+                                <span>Split ({tx.splits?.length})</span>
+                              </button>
+                            )}
+                          </div>
+                          {tx.notes && (
+                            <p className="text-[11px] text-muted-foreground mt-0.5">
+                              {tx.notes}
+                            </p>
+                          )}
+                        </td>
+
+                        {/* Category */}
+                        <td className="py-3 px-4">
+                          <Badge
+                            variant={
+                              tx.type === "income"
+                                ? "income"
+                                : tx.type === "transfer"
+                                ? "transfer"
+                                : "default"
+                            }
+                          >
+                            {tx.type === "transfer" ? "Account Transfer" : tx.category || "Uncategorized"}
+                          </Badge>
+                        </td>
+
+                        {/* Account & Payment Method */}
+                        <td className="py-3 px-4">
+                          {tx.type === "transfer" ? (
+                            <span className="text-muted-foreground">
+                              {fromAcc?.name || "Account"} &rarr; {toAcc?.name || "Account"}
+                            </span>
+                          ) : (
+                            <div>
+                              <span className="font-medium text-foreground">
+                                {acc?.name || "Account"}
+                              </span>
+                              <span className="text-muted-foreground text-[11px] ml-1.5">
+                                ({tx.paymentMethod || "UPI"})
+                              </span>
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Amount */}
+                        <td className="py-3 px-4 text-right">
+                          <span
+                            className={`font-bold tabular-nums text-sm ${
+                              tx.type === "expense"
+                                ? "text-foreground"
+                                : tx.type === "income"
+                                ? "text-finance-income"
+                                : "text-muted-foreground"
+                            }`}
+                          >
+                            {formatSignedAmount(tx.amount, tx.type, isPrivateMode)}
+                          </span>
+                        </td>
+
+                        {/* Row Actions */}
+                        <td className="py-3 px-4 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={() => {
+                                setEditingTransaction(tx);
+                                setIsQuickAddOpen(true);
+                              }}
+                              className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-surface-muted"
+                              title="Edit Transaction"
+                            >
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDuplicate(tx)}
+                              className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-surface-muted"
+                              title="Quick Duplicate"
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(tx.id)}
+                              className="p-1 rounded text-muted-foreground hover:text-finance-expense hover:bg-surface-muted"
+                              title="Delete"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card List View (Visible only on < sm screens) */}
+            <div className="sm:hidden divide-y divide-border">
+              {filteredTransactions.map((tx) => {
+                const acc = accounts.find((a) => a.id === tx.accountId);
+                const fromAcc = accounts.find((a) => a.id === tx.fromAccountId);
+                const toAcc = accounts.find((a) => a.id === tx.toAccountId);
+
+                return (
+                  <div
+                    key={tx.id}
+                    className="p-3.5 space-y-2 hover:bg-surface-warm/40 transition-colors"
+                  >
+                    {/* Top Row: Description & Amount */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-semibold text-sm text-foreground break-words">
                             {tx.description}
                           </span>
                           {tx.isSplit && (
                             <button
                               onClick={() => setInspectingSplitTx(tx)}
-                              className="inline-flex items-center gap-1 text-[10px] bg-terracotta-50 text-terracotta-700 px-1.5 py-0.5 rounded border border-terracotta-200 hover:bg-terracotta-100"
-                              title="Click to view split details"
+                              className="inline-flex items-center gap-1 text-[10px] bg-terracotta-50 text-terracotta-700 px-1.5 py-0.5 rounded border border-terracotta-200"
+                              title="View splits"
                             >
                               <Split className="h-2.5 w-2.5" />
                               <span>Split ({tx.splits?.length})</span>
                             </button>
                           )}
                         </div>
-                        {tx.notes && (
-                          <p className="text-[11px] text-muted-foreground mt-0.5">
-                            {tx.notes}
-                          </p>
-                        )}
-                      </td>
-
-                      {/* Category */}
-                      <td className="py-3 px-4">
-                        <Badge
-                          variant={
-                            tx.type === "income"
-                              ? "income"
-                              : tx.type === "transfer"
-                              ? "transfer"
-                              : "default"
-                          }
-                        >
-                          {tx.type === "transfer" ? "Account Transfer" : tx.category || "Uncategorized"}
-                        </Badge>
-                      </td>
-
-                      {/* Account & Payment Method */}
-                      <td className="py-3 px-4">
-                        {tx.type === "transfer" ? (
-                          <span className="text-muted-foreground">
-                            {fromAcc?.name || "Account"} &rarr; {toAcc?.name || "Account"}
-                          </span>
-                        ) : (
-                          <div>
-                            <span className="font-medium text-foreground">
-                              {acc?.name || "Account"}
-                            </span>
-                            <span className="text-muted-foreground text-[11px] ml-1.5">
-                              ({tx.paymentMethod || "UPI"})
-                            </span>
-                          </div>
-                        )}
-                      </td>
-
-                      {/* Amount */}
-                      <td className="py-3 px-4 text-right">
+                        <p className="text-[11px] text-muted-foreground mt-0.5 flex flex-wrap items-center gap-1.5">
+                          <span className="font-mono">{tx.date}</span>
+                          <span>•</span>
+                          {tx.type === "transfer" ? (
+                            <span>{fromAcc?.name || "Account"} &rarr; {toAcc?.name || "Account"}</span>
+                          ) : (
+                            <span>{acc?.name || "Account"} ({tx.paymentMethod || "UPI"})</span>
+                          )}
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0">
                         <span
                           className={`font-bold tabular-nums text-sm ${
                             tx.type === "expense"
@@ -511,43 +603,62 @@ export default function TransactionsPage() {
                         >
                           {formatSignedAmount(tx.amount, tx.type, isPrivateMode)}
                         </span>
-                      </td>
+                      </div>
+                    </div>
 
-                      {/* Row Actions */}
-                      <td className="py-3 px-4 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => {
-                              setEditingTransaction(tx);
-                              setIsQuickAddOpen(true);
-                            }}
-                            className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-surface-muted"
-                            title="Edit Transaction"
-                          >
-                            <Edit2 className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleDuplicate(tx)}
-                            className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-surface-muted"
-                            title="Quick Duplicate"
-                          >
-                            <Copy className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(tx.id)}
-                            className="p-1 rounded text-muted-foreground hover:text-finance-expense hover:bg-surface-muted"
-                            title="Delete"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                    {/* Notes if present */}
+                    {tx.notes && (
+                      <p className="text-[11px] text-muted-foreground bg-surface-warm/60 px-2 py-1 rounded">
+                        {tx.notes}
+                      </p>
+                    )}
+
+                    {/* Bottom Row: Category Badge & Action Buttons */}
+                    <div className="flex items-center justify-between pt-1">
+                      <Badge
+                        variant={
+                          tx.type === "income"
+                            ? "income"
+                            : tx.type === "transfer"
+                            ? "transfer"
+                            : "default"
+                        }
+                      >
+                        {tx.type === "transfer" ? "Account Transfer" : tx.category || "Uncategorized"}
+                      </Badge>
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => {
+                            setEditingTransaction(tx);
+                            setIsQuickAddOpen(true);
+                          }}
+                          className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-surface-muted"
+                          title="Edit Transaction"
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDuplicate(tx)}
+                          className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-surface-muted"
+                          title="Quick Duplicate"
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(tx.id)}
+                          className="p-1.5 rounded text-muted-foreground hover:text-finance-expense hover:bg-surface-muted"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </Card>
 

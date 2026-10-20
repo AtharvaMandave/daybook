@@ -11,6 +11,7 @@ import { store } from "@/lib/data/storage";
 export default function AppLayout({ children }) {
   const [appState, setAppState] = useState(store.getState());
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
 
   useEffect(() => {
@@ -48,10 +49,12 @@ export default function AppLayout({ children }) {
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Desktop Sidebar */}
+      {/* Sidebar (Desktop Sticky + Mobile Slide-Over Drawer) */}
       <Sidebar
         state={appState}
         onTogglePrivateMode={handleTogglePrivateMode}
+        isMobileOpen={isMobileSidebarOpen}
+        onCloseMobile={() => setIsMobileSidebarOpen(false)}
       />
 
       {/* Main Content Area */}
@@ -65,15 +68,19 @@ export default function AppLayout({ children }) {
           onOpenQuickAdd={() => setIsQuickAddOpen(true)}
           isPrivateMode={appState.isPrivateMode}
           onTogglePrivateMode={handleTogglePrivateMode}
+          onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
         />
 
-        <main className="flex-1 p-4 md:p-8 pb-24 md:pb-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-3 sm:p-4 md:p-8 pb-24 md:pb-8 max-w-7xl w-full mx-auto">
           {children}
         </main>
       </div>
 
       {/* Mobile Navigation */}
-      <MobileNav onOpenQuickAdd={() => setIsQuickAddOpen(true)} />
+      <MobileNav
+        onOpenQuickAdd={() => setIsQuickAddOpen(true)}
+        onOpenSidebar={() => setIsMobileSidebarOpen(true)}
+      />
 
       {/* Global Quick Add Transaction Modal */}
       <QuickAddModal

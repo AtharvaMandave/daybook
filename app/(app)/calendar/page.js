@@ -188,7 +188,7 @@ export default function CalendarPage() {
                 <div
                   key={index}
                   onClick={() => setSelectedDate(d)}
-                  className={`min-h-[82px] rounded-btn border p-1.5 flex flex-col justify-between cursor-pointer transition-all ${
+                  className={`min-h-[52px] sm:min-h-[82px] rounded-btn border p-1 sm:p-1.5 flex flex-col justify-between cursor-pointer transition-all ${
                     isSelected
                       ? "border-forest-500 bg-surface-sage/40 ring-1 ring-forest-500 shadow-subtle"
                       : isCurrentMonth
@@ -198,7 +198,7 @@ export default function CalendarPage() {
                 >
                   <div className="flex items-center justify-between">
                     <span
-                      className={`text-xs font-semibold ${
+                      className={`text-[11px] sm:text-xs font-semibold ${
                         isSelected ? "text-forest-900 font-bold" : "text-foreground"
                       }`}
                     >
@@ -206,14 +206,30 @@ export default function CalendarPage() {
                     </span>
 
                     {isPayday && (
-                      <span className="text-[9px] bg-forest-600 text-white font-bold px-1 rounded">
-                        Payday
-                      </span>
+                      <>
+                        <span className="hidden sm:inline text-[9px] bg-forest-600 text-white font-bold px-1 rounded">
+                          Payday
+                        </span>
+                        <span className="sm:hidden h-1.5 w-1.5 rounded-full bg-forest-600" title="Payday" />
+                      </>
                     )}
                   </div>
 
-                  {/* Day markers / indicators */}
-                  <div className="space-y-1 my-auto">
+                  {/* Mobile Compact Dot Indicators */}
+                  <div className="flex items-center justify-center gap-1 sm:hidden my-auto">
+                    {hasTx && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-finance-expense" title={`${dayData.transactions.length} record(s)`} />
+                    )}
+                    {hasRecurring && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-finance-warning" title={`${dayData.recurring.length} bill(s)`} />
+                    )}
+                    {hasPlanned && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-terracotta-500" title="Planned event" />
+                    )}
+                  </div>
+
+                  {/* Desktop Full Day markers */}
+                  <div className="hidden sm:block space-y-1 my-auto">
                     {hasTx && (
                       <div className="text-[10px] font-medium text-finance-expense flex items-center gap-1">
                         <span className="h-1.5 w-1.5 rounded-full bg-finance-expense" />

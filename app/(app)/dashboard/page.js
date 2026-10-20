@@ -423,11 +423,11 @@ export default function DashboardPage() {
               recentTransactions.map((tx) => (
                 <div
                   key={tx.id}
-                  className="flex items-center justify-between py-3 hover:bg-surface-warm/50 px-2 rounded transition-colors"
+                  className="flex items-center justify-between gap-3 py-3 hover:bg-surface-warm/50 px-2 rounded transition-colors"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div
-                      className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-semibold ${
+                      className={`h-8 w-8 rounded-full shrink-0 flex items-center justify-center text-xs font-semibold ${
                         tx.type === "expense"
                           ? "bg-finance-expenseBg text-finance-expense"
                           : tx.type === "income"
@@ -437,17 +437,17 @@ export default function DashboardPage() {
                     >
                       {tx.type === "expense" ? "↓" : tx.type === "income" ? "↑" : "⇄"}
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{tx.description}</p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>{tx.category || "Transfer"}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-foreground truncate">{tx.description}</p>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground truncate">
+                        <span className="truncate">{tx.category || "Transfer"}</span>
                         <span>•</span>
-                        <span>{tx.date}</span>
+                        <span className="shrink-0">{tx.date}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="text-right">
+                  <div className="text-right shrink-0">
                     <span
                       className={`text-sm font-semibold tabular-nums ${
                         tx.type === "expense"
