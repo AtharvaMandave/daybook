@@ -175,3 +175,4 @@ npm start
 3. Set the Framework Preset to **Next.js**.
 4. (Optional) Add your Supabase environment variables in the Vercel project settings.
 5. Deploy.
+# daybook
