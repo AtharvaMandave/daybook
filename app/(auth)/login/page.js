@@ -79,51 +79,51 @@ export default function LoginPage() {
   };
 
   // 1-Click Instant Sign In
-  const handleQuickSignIn = async () => {
-    setIsQuickLoading(true);
-    try {
-      const res = await fetch("/api/auth/quick-login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: "mandaveatharva123@gmail.com",
-          password: "Atharva@123",
-        }),
-      });
+  // const handleQuickSignIn = async () => {
+  //   setIsQuickLoading(true);
+  //   try {
+  //     const res = await fetch("/api/auth/quick-login", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({
+  //         email: "mandaveatharva123@gmail.com",
+  //         password: "Atharva@123",
+  //       }),
+  //     });
 
-      const json = await res.json();
-      if (!res.ok) {
-        toast.error(json.error || "Quick login failed.");
-        setIsQuickLoading(false);
-        return;
-      }
+  //     const json = await res.json();
+  //     if (!res.ok) {
+  //       toast.error(json.error || "Quick login failed.");
+  //       setIsQuickLoading(false);
+  //       return;
+  //     }
 
-      const supabase = getSupabaseBrowserClient();
-      if (supabase) {
-        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-          email: json.email,
-          password: json.password,
-        });
+  //     const supabase = getSupabaseBrowserClient();
+  //     if (supabase) {
+  //       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+  //         email: json.email,
+  //         password: json.password,
+  //       });
 
-        if (authError) {
-          toast.error(authError.message);
-          setIsQuickLoading(false);
-          return;
-        }
+  //       if (authError) {
+  //         toast.error(authError.message);
+  //         setIsQuickLoading(false);
+  //         return;
+  //       }
 
-        if (authData?.user) {
-          await store.loadUserDataFromSupabase(authData.user);
-        }
-      }
+  //       if (authData?.user) {
+  //         await store.loadUserDataFromSupabase(authData.user);
+  //       }
+  //     }
 
-      toast.success("Signed in as Atharva Mandave! Cloud DB active.");
-      window.location.href = "/dashboard";
-    } catch (err) {
-      console.error("Quick sign in error:", err);
-      toast.error("Quick sign in failed: " + (err.message || "Network error"));
-      setIsQuickLoading(false);
-    }
-  };
+  //     toast.success("Signed in as Atharva Mandave! Cloud DB active.");
+  //     window.location.href = "/dashboard";
+  //   } catch (err) {
+  //     console.error("Quick sign in error:", err);
+  //     toast.error("Quick sign in failed: " + (err.message || "Network error"));
+  //     setIsQuickLoading(false);
+  //   }
+  // };
 
   return (
     <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4 selection:bg-forest-100 selection:text-forest-900">
@@ -144,7 +144,7 @@ export default function LoginPage() {
         {/* Auth Card */}
         <Card className="p-6 space-y-4">
           {/* Quick Sign In Option */}
-          <div className="pb-3 border-b border-border space-y-2">
+          {/* <div className="pb-3 border-b border-border space-y-2">
             <Button
               type="button"
               variant="default"
@@ -159,7 +159,7 @@ export default function LoginPage() {
             <p className="text-[10px] text-muted-foreground text-center">
               Instantly connects to your live Supabase database.
             </p>
-          </div>
+          </div> */}
 
           <form onSubmit={handleSignIn} className="space-y-4">
             <div>
@@ -168,7 +168,7 @@ export default function LoginPage() {
               </label>
               <Input
                 type="email"
-                placeholder="mandaveatharva123@gmail.com"
+                placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required={hasSupabase}
@@ -180,13 +180,13 @@ export default function LoginPage() {
                 <label className="block text-xs font-medium text-foreground">
                   Password
                 </label>
-                <span className="text-[10px] text-muted-foreground font-mono">
-                  Default: Atharva@123
-                </span>
+                {/* <span className="text-[10px] text-muted-foreground font-mono">
+                 
+                </span> */}
               </div>
               <Input
                 type="password"
-                placeholder="••••••••"
+                placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required={hasSupabase}
