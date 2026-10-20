@@ -23,7 +23,7 @@ export default function LoginPage() {
   const handleSignIn = async (e) => {
     e.preventDefault();
     if (!hasSupabase) {
-      toast.info("Supabase is not configured yet. Launching in Demo Mode with full capabilities.");
+      toast.info("Supabase is not configured yet. Continuing with local ledger.");
       router.push("/dashboard");
       return;
     }
@@ -125,12 +125,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleEnterDemo = () => {
-    store.switchToDemoMode();
-    toast.success("Welcome to Daybook Demo Mode.");
-    router.push("/dashboard");
-  };
-
   return (
     <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4 selection:bg-forest-100 selection:text-forest-900">
       <div className="w-full max-w-sm space-y-6">
@@ -201,7 +195,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              variant="outline"
+              variant="default"
               size="default"
               className="w-full font-medium"
               disabled={isLoading || isQuickLoading}
@@ -210,21 +204,9 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* Quick Demo Access Button */}
-          <div className="pt-2 border-t border-border space-y-2">
-            <Button
-              type="button"
-              variant="subtle"
-              size="default"
-              onClick={handleEnterDemo}
-              className="w-full gap-2"
-            >
-              <Sparkles className="h-4 w-4 text-forest-600" />
-              <span>Explore Demo Mode (INR ₹)</span>
-            </Button>
-
-            <p className="text-[11px] text-muted-foreground text-center">
-              Don't have an account?{" "}
+          <div className="pt-2 border-t border-border text-center">
+            <p className="text-[11px] text-muted-foreground">
+              Don&apos;t have an account?{" "}
               <Link href="/signup" className="text-forest-700 font-semibold hover:underline">
                 Sign up
               </Link>
@@ -235,7 +217,7 @@ export default function LoginPage() {
         {/* Backend Status Footer */}
         <div className="text-center">
           <Badge variant={hasSupabase ? "income" : "outline"} className="text-[10px]">
-            {hasSupabase ? "Supabase PostgreSQL Active" : "Demo Mode Fallback Ready"}
+            {hasSupabase ? "Supabase PostgreSQL Connected" : "Local Ledger Storage"}
           </Badge>
         </div>
       </div>

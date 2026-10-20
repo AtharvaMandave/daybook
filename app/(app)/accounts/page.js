@@ -168,83 +168,104 @@ export default function AccountsPage() {
       </div>
 
       {/* Accounts List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {activeAccounts.map((acc) => {
-          const isCredit = acc.type === "credit";
-          return (
-            <Card key={acc.id} className="relative overflow-hidden">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="h-10 w-10 rounded-lg flex items-center justify-center text-white shadow-subtle"
-                    style={{ backgroundColor: acc.color || "#456B50" }}
-                  >
-                    {isCredit ? (
-                      <CreditCard className="h-5 w-5" />
-                    ) : acc.type === "cash" ? (
-                      <Coins className="h-5 w-5" />
-                    ) : (
-                      <Building className="h-5 w-5" />
-                    )}
+      {activeAccounts.length === 0 ? (
+        <Card className="p-8 text-center space-y-3">
+          <div className="h-12 w-12 rounded-full bg-surface-muted flex items-center justify-center mx-auto text-muted-foreground">
+            <Wallet className="h-6 w-6" />
+          </div>
+          <h3 className="text-base font-bold text-foreground">No Accounts Added Yet</h3>
+          <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+            Add your bank accounts, credit cards, or cash in hand to start tracking balances and calculating your real net worth.
+          </p>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => handleOpenAdd(null)}
+            className="gap-1.5 mt-2"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Add Your First Account</span>
+          </Button>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {activeAccounts.map((acc) => {
+            const isCredit = acc.type === "credit";
+            return (
+              <Card key={acc.id} className="relative overflow-hidden">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="h-10 w-10 rounded-lg flex items-center justify-center text-white shadow-subtle"
+                      style={{ backgroundColor: acc.color || "#456B50" }}
+                    >
+                      {isCredit ? (
+                        <CreditCard className="h-5 w-5" />
+                      ) : acc.type === "cash" ? (
+                        <Coins className="h-5 w-5" />
+                      ) : (
+                        <Building className="h-5 w-5" />
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-foreground">{acc.name}</h3>
+                      <p className="text-[11px] text-muted-foreground font-mono">
+                        {acc.accountNumber || (isCredit ? "Credit Line" : "Deposit A/C")}
+                      </p>
+                    </div>
                   </div>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleOpenAdd(acc)}
+                      className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-surface-muted"
+                      title="Edit account"
+                    >
+                      <Edit2 className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleArchive(acc.id, acc.name)}
+                      className="p-1 rounded text-muted-foreground hover:text-finance-expense hover:bg-surface-muted"
+                      title="Archive account"
+                    >
+                      <Archive className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Balance */}
+                <div className="mt-4 pt-3 border-t border-border flex items-end justify-between">
                   <div>
-                    <h3 className="text-sm font-bold text-foreground">{acc.name}</h3>
-                    <p className="text-[11px] text-muted-foreground font-mono">
-                      {acc.accountNumber || (isCredit ? "Credit Line" : "Deposit A/C")}
+                    <span className="text-[11px] text-muted-foreground">
+                      {isCredit ? "Outstanding Balance (Owed)" : "Current Balance"}
+                    </span>
+                    <p
+                      className={`text-xl font-bold tabular-nums ${
+                        isCredit
+                          ? acc.balance < 0
+                            ? "text-terracotta-700"
+                            : "text-foreground"
+                          : "text-foreground"
+                      }`}
+                    >
+                      {formatCurrency(isCredit ? Math.abs(acc.balance) : acc.balance, {
+                        isPrivate: isPrivateMode,
+                      })}
                     </p>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => handleOpenAdd(acc)}
-                    className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-surface-muted"
-                    title="Edit account"
+                  <Badge
+                    variant={isCredit ? "terracotta" : "default"}
+                    className="capitalize text-[11px]"
                   >
-                    <Edit2 className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    onClick={() => handleArchive(acc.id, acc.name)}
-                    className="p-1 rounded text-muted-foreground hover:text-finance-expense hover:bg-surface-muted"
-                    title="Archive account"
-                  >
-                    <Archive className="h-3.5 w-3.5" />
-                  </button>
+                    {acc.type}
+                  </Badge>
                 </div>
-              </div>
-
-              {/* Balance */}
-              <div className="mt-4 pt-3 border-t border-border flex items-end justify-between">
-                <div>
-                  <span className="text-[11px] text-muted-foreground">
-                    {isCredit ? "Outstanding Balance (Owed)" : "Current Balance"}
-                  </span>
-                  <p
-                    className={`text-xl font-bold tabular-nums ${
-                      isCredit
-                        ? acc.balance < 0
-                          ? "text-terracotta-700"
-                          : "text-foreground"
-                        : "text-foreground"
-                    }`}
-                  >
-                    {formatCurrency(isCredit ? Math.abs(acc.balance) : acc.balance, {
-                      isPrivate: isPrivateMode,
-                    })}
-                  </p>
-                </div>
-
-                <Badge
-                  variant={isCredit ? "terracotta" : "default"}
-                  className="capitalize text-[11px]"
-                >
-                  {acc.type}
-                </Badge>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
       {/* Accounting Conventions Reference Note */}
       <div className="rounded-card border border-border bg-surface-warm p-4 flex items-start gap-3">

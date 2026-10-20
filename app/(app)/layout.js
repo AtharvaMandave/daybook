@@ -11,7 +11,7 @@ import { store } from "@/lib/data/storage";
 export default function AppLayout({ children }) {
   const [appState, setAppState] = useState(store.getState());
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
-  const [currentDate, setCurrentDate] = useState(new Date("2026-10-15T00:00:00"));
+  const [currentDate, setCurrentDate] = useState(new Date());
 
   useEffect(() => {
     const unsubscribe = store.subscribe((newState) => {
@@ -19,13 +19,6 @@ export default function AppLayout({ children }) {
     });
     return () => unsubscribe();
   }, []);
-
-  // Sync date: If authenticated in live mode, use real current date
-  useEffect(() => {
-    if (!appState.isDemoMode) {
-      setCurrentDate(new Date());
-    }
-  }, [appState.isDemoMode]);
 
   // Keyboard shortcut listener: Cmd+K or Ctrl+K opens quick add
   useEffect(() => {

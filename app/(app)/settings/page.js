@@ -14,6 +14,7 @@ import {
   Server,
   AlertCircle,
   CheckCircle2,
+  Trash2,
 } from "lucide-react";
 import { store } from "@/lib/data/storage";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
@@ -40,7 +41,7 @@ export default function SettingsPage() {
     if (appState.profile) {
       setCurrency(appState.profile.currency || "INR");
       setPaydayDay(String(appState.profile.paydayDayOfMonth || 30));
-      setExpectedPaydayIncome(String(appState.profile.expectedPaydayIncome || 135000));
+      setExpectedPaydayIncome(String(appState.profile.expectedPaydayIncome || 0));
       setIsPaydayConfigured(Boolean(appState.profile.isPaydayConfigured));
     }
   }, [appState.profile]);
@@ -61,10 +62,10 @@ export default function SettingsPage() {
     toast.success("Preferences updated successfully.");
   };
 
-  const handleResetDemo = () => {
-    if (window.confirm("Reset all accounts, transactions, and budgets back to the initial demo data?")) {
-      store.resetToDefaultDemo();
-      toast.success("Restored default Indian demo dataset.");
+  const handleClearLedger = () => {
+    if (window.confirm("Clear all local transactions, budgets, and accounts from this browser?")) {
+      store.resetLedger();
+      toast.success("Local ledger cleared.");
     }
   };
 
@@ -92,29 +93,41 @@ export default function SettingsPage() {
       </div>
 
       {/* Account & Session Management Card */}
-      <Card className={appState.isDemoMode ? "border-sage-200 bg-surface-sage/30" : "border-emerald-200 bg-emerald-50/40"}>
+      <Card className={appState.user ? "border-emerald-200 bg-emerald-50/40" : "border-border bg-surface-warm"}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-3">
-            <Server className={`h-5 w-5 mt-0.5 ${appState.isDemoMode ? "text-forest-700" : "text-emerald-700"}`} />
+            <Server className={`h-5 w-5 mt-0.5 ${appState.user ? "text-emerald-700" : "text-forest-700"}`} />
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-bold text-foreground">
-                  {appState.isDemoMode ? "Demo Mode (Local Offline Storage)" : "Supabase Cloud Database"}
+                  {appState.user ? "Supabase Cloud Database" : "Local Browser Storage"}
                 </h3>
-                <Badge variant={appState.isDemoMode ? "default" : "income"}>
-                  {appState.isDemoMode ? "Local Demo" : "Live Cloud Active"}
+                <Badge variant={appState.user ? "income" : "default"}>
+                  {appState.user ? "Live Cloud Active" : "Local Ledger"}
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {appState.isDemoMode
-                  ? "You are currently exploring Daybook in Demo Mode with local browser storage. Sign up or log in to sync transactions permanently across devices."
-                  : `Authenticated as ${appState.profile?.fullName || "User"} (${appState.user?.email || appState.profile?.email}). All changes are saved to Supabase PostgreSQL.`}
+                {appState.user
+                  ? `Authenticated as ${appState.profile?.fullName || "User"} (${appState.user.email}). All accounts, transactions, and budgets are synced to your PostgreSQL database.`
+                  : "You are currently running Daybook locally on this device. Sign in or create an account to sync across all your devices with Supabase."}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            {appState.isDemoMode ? (
+            {appState.user ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  store.signOut();
+                  toast.success("Signed out successfully.");
+                }}
+                className="text-finance-expense hover:text-finance-expense"
+              >
+                Sign Out
+              </Button>
+            ) : (
               <>
                 <Button
                   variant="outline"
@@ -131,18 +144,6 @@ export default function SettingsPage() {
                   Create Account
                 </Button>
               </>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  store.signOut();
-                  toast.success("Signed out. Switched to Demo Mode.");
-                }}
-                className="text-finance-expense hover:text-finance-expense"
-              >
-                Sign Out to Demo
-              </Button>
             )}
           </div>
         </div>
@@ -257,10 +258,10 @@ export default function SettingsPage() {
         </div>
       </Card>
 
-      {/* Data Management & Demo Reset */}
+      {/* Data Management & Ledger Controls */}
       <Card>
         <CardHeader>
-          <CardTitle>Data Management & Demo Controls</CardTitle>
+          <CardTitle>Data Management & Ledger Controls</CardTitle>
         </CardHeader>
         <div className="space-y-4 pt-2 text-xs">
           <div className="flex items-center justify-between pb-3 border-b border-border">
@@ -283,19 +284,19 @@ export default function SettingsPage() {
 
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-semibold text-foreground">Reset Demo Data</p>
+              <p className="font-semibold text-foreground">Clear Local Ledger Data</p>
               <p className="text-muted-foreground text-[11px]">
-                Restore initial realistic Indian sample ledger with fresh October transactions.
+                Clear all transactions, accounts, and budgets cached in this browser.
               </p>
             </div>
             <Button
               variant="outline"
               size="sm"
-              onClick={handleResetDemo}
+              onClick={handleClearLedger}
               className="gap-1.5 text-finance-expense hover:text-finance-expense"
             >
-              <RotateCcw className="h-3.5 w-3.5" />
-              <span>Reset Data</span>
+              <Trash2 className="h-3.5 w-3.5" />
+              <span>Clear Ledger</span>
             </Button>
           </div>
         </div>

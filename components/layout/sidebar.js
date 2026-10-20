@@ -12,11 +12,11 @@ import {
   BarChart3,
   Wallet,
   Settings,
-  Sparkles,
   ShieldCheck,
   Eye,
   EyeOff,
   LogOut,
+  LogIn,
 } from "lucide-react";
 import { cn } from "../ui/button";
 import { store } from "@/lib/data/storage";
@@ -34,6 +34,19 @@ const NAV_ITEMS = [
 
 export function Sidebar({ state, onTogglePrivateMode }) {
   const pathname = usePathname();
+
+  const userInitials = state?.profile?.fullName
+    ? state.profile.fullName
+        .split(" ")
+        .filter(Boolean)
+        .map((n) => n[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : state?.user?.email?.slice(0, 2).toUpperCase() || "DB";
+
+  const displayName = state?.profile?.fullName || (state?.user?.email ? state.user.email.split("@")[0] : "My Daybook");
+  const displayEmail = state?.user?.email || state?.profile?.email || "Offline Ledger";
 
   return (
     <aside className="hidden md:flex md:w-60 lg:w-64 flex-col border-r border-border bg-surface-warm min-h-screen select-none">
@@ -54,31 +67,33 @@ export function Sidebar({ state, onTogglePrivateMode }) {
         </Link>
       </div>
 
-      {/* Reactive Mode Badge */}
-      {state?.isDemoMode ? (
-        <div className="mx-4 mt-3 rounded-btn border border-sage-200/80 bg-surface-sage/50 px-3 py-2 text-xs flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-forest-800">
-            <Sparkles className="h-3.5 w-3.5 text-forest-600" />
-            <span className="font-medium">Demo Mode</span>
-          </div>
-          <Link
-            href="/login"
-            className="text-[10px] text-forest-700 bg-surface-white hover:bg-forest-50 px-2 py-0.5 rounded border border-sage-200 font-semibold transition-colors"
-          >
-            Sign In
-          </Link>
-        </div>
-      ) : (
-        <div className="mx-4 mt-3 rounded-btn border border-emerald-200 bg-emerald-50/80 px-3 py-2 text-xs flex items-center justify-between">
-          <div className="flex items-center gap-2 text-emerald-900 font-medium">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Supabase Cloud</span>
-          </div>
-          <span className="text-[10px] text-emerald-800 bg-white px-1.5 py-0.5 rounded border border-emerald-200 font-semibold font-mono">
-            Live DB
-          </span>
-        </div>
-      )}
+      {/* Cloud Status Badge */}
+      <div className="mx-4 mt-3 rounded-btn border border-border/80 bg-white px-3 py-2 text-xs flex items-center justify-between shadow-subtle">
+        {state?.user ? (
+          <>
+            <div className="flex items-center gap-2 text-emerald-900 font-medium">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Supabase Cloud</span>
+            </div>
+            <span className="text-[10px] text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 font-semibold font-mono">
+              Synced
+            </span>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <ShieldCheck className="h-3.5 w-3.5 text-forest-600" />
+              <span className="font-medium text-foreground">Local Ledger</span>
+            </div>
+            <Link
+              href="/login"
+              className="text-[10px] text-forest-700 bg-surface-sage hover:bg-forest-100 px-2 py-0.5 rounded font-semibold transition-colors"
+            >
+              Sign In
+            </Link>
+          </>
+        )}
+      </div>
 
       {/* Navigation Links */}
       <nav className="flex-1 px-3 py-4 space-y-1">
@@ -129,63 +144,41 @@ export function Sidebar({ state, onTogglePrivateMode }) {
           </span>
         </button>
 
-        {/* User Card & Sign Out / Auth Actions */}
-        <div className="rounded-btn border border-border/80 bg-white p-2.5 space-y-2">
+        {/* User Card */}
+        <div className="rounded-btn border border-border/80 bg-white p-2.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="h-8 w-8 rounded-full bg-forest-100 border border-forest-200 flex items-center justify-center text-forest-800 text-xs font-semibold shrink-0">
-                {state?.isDemoMode
-                  ? "AS"
-                  : state?.profile?.fullName
-                  ? state.profile.fullName
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .slice(0, 2)
-                      .toUpperCase()
-                  : state?.user?.email?.slice(0, 2).toUpperCase() || "DB"}
+                {userInitials}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-foreground truncate">
-                  {state?.isDemoMode
-                    ? "Arjun Sharma"
-                    : state?.profile?.fullName || state?.user?.email?.split("@")[0] || "User"}
+                  {displayName}
                 </p>
                 <p className="text-[10px] text-muted-foreground truncate">
-                  {state?.isDemoMode
-                    ? "Demo Profile (INR ₹)"
-                    : state?.user?.email || state?.profile?.email}
+                  {displayEmail}
                 </p>
               </div>
             </div>
 
-            {!state?.isDemoMode && (
+            {state?.user ? (
               <button
                 onClick={() => store.signOut()}
                 className="p-1.5 rounded text-muted-foreground hover:text-finance-expense hover:bg-surface-muted transition-colors"
-                title="Sign out & return to Demo Mode"
+                title="Sign out"
               >
                 <LogOut className="h-4 w-4" />
               </button>
-            )}
-          </div>
-
-          {state?.isDemoMode && (
-            <div className="flex gap-1.5 pt-1 border-t border-border/60">
-              <Link
-                href="/signup"
-                className="flex-1 text-center py-1 px-1.5 bg-forest-600 hover:bg-forest-700 text-white rounded text-[10px] font-medium transition-colors"
-              >
-                Sign Up Live
-              </Link>
+            ) : (
               <Link
                 href="/login"
-                className="flex-1 text-center py-1 px-1.5 bg-surface-muted hover:bg-surface-sage text-foreground rounded text-[10px] font-medium transition-colors border border-border/60"
+                className="p-1.5 rounded text-muted-foreground hover:text-forest-700 hover:bg-surface-muted transition-colors"
+                title="Sign in"
               >
-                Sign In
+                <LogIn className="h-4 w-4" />
               </Link>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </aside>

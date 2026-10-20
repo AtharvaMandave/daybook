@@ -49,12 +49,12 @@ export default function BudgetsPage() {
 
   const { budgets, transactions, categories, isPrivateMode } = appState;
 
-  const currentMonthStart = startOfMonth(new Date("2026-10-15"));
-  const currentMonthEnd = endOfMonth(new Date("2026-10-15"));
+  const currentMonthStart = startOfMonth(new Date());
+  const currentMonthEnd = endOfMonth(new Date());
 
   const budgetProgress = calculateBudgetsProgress(
-    budgets,
-    transactions,
+    budgets || [],
+    transactions || [],
     currentMonthStart,
     currentMonthEnd
   );
@@ -204,9 +204,29 @@ export default function BudgetsPage() {
       </div>
 
       {/* Category Budgets Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {budgetProgress.map((b) => (
-          <Card key={b.id} className="relative overflow-hidden flex flex-col justify-between">
+      {budgetProgress.length === 0 ? (
+        <Card className="p-8 text-center space-y-3">
+          <div className="h-12 w-12 rounded-full bg-surface-muted flex items-center justify-center mx-auto text-muted-foreground">
+            <PieChart className="h-6 w-6" />
+          </div>
+          <h3 className="text-base font-bold text-foreground">No Budgets Configured</h3>
+          <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+            Set monthly envelopes for categories like Groceries, Dining, and Utilities to monitor spending and get threshold alerts.
+          </p>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => handleOpenAdd(null)}
+            className="gap-1.5 mt-2"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Create Your First Budget</span>
+          </Button>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {budgetProgress.map((b) => (
+            <Card key={b.id} className="relative overflow-hidden flex flex-col justify-between">
             <div>
               {/* Header */}
               <div className="flex items-start justify-between pb-3">
@@ -309,7 +329,8 @@ export default function BudgetsPage() {
             </div>
           </Card>
         ))}
-      </div>
+        </div>
+      )}
 
       {/* CREATE / EDIT BUDGET MODAL */}
       <Dialog open={isAddBudgetOpen} onOpenChange={setIsAddBudgetOpen}>

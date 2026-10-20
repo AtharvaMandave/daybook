@@ -55,13 +55,13 @@ export default function LandingPage() {
         <div className="mt-8 flex flex-col sm:flex-row items-center gap-3">
           <Link href="/dashboard">
             <Button variant="default" size="lg" className="gap-2 shadow-elevated">
-              <span>Launch Demo Mode (INR ₹)</span>
+              <span>Open Daybook Ledger</span>
               <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
           <Link href="/login">
             <Button variant="outline" size="lg">
-              Sign In with Supabase
+              Sign In
             </Button>
           </Link>
         </div>

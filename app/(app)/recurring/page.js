@@ -205,7 +205,27 @@ export default function RecurringPage() {
         </div>
 
         <div className="divide-y divide-border">
-          {recurringRules.map((rule) => {
+          {recurringRules.length === 0 ? (
+            <div className="p-8 text-center space-y-3">
+              <div className="h-12 w-12 rounded-full bg-surface-muted flex items-center justify-center mx-auto text-muted-foreground">
+                <Repeat className="h-6 w-6" />
+              </div>
+              <h3 className="text-base font-bold text-foreground">No Recurring Rules Added</h3>
+              <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                Schedule routine monthly rent, software subscriptions, insurance premiums, or predictable salary to reserve funds before payday.
+              </p>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleOpenAdd}
+                className="gap-1.5 mt-2"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Create Recurring Rule</span>
+              </Button>
+            </div>
+          ) : (
+            recurringRules.map((rule) => {
             const acc = accounts.find((a) => a.id === rule.accountId);
             const monthlyEquiv = calculateMonthlyEquivalent(rule.amount, rule.frequency);
             const annualCost = calculateAnnualCost(rule.amount, rule.frequency);
@@ -281,7 +301,8 @@ export default function RecurringPage() {
                 </div>
               </div>
             );
-          })}
+          })
+        )}
         </div>
       </Card>
 

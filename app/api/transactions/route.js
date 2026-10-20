@@ -5,9 +5,8 @@ import { transactionSchema } from "@/lib/validation/schemas";
 export async function GET(request) {
   if (!isSupabaseServerConfigured()) {
     return NextResponse.json({
-      error: "Supabase not configured. Using client Demo Mode.",
-      isDemo: true,
-    });
+      error: "Supabase server is not configured.",
+    }, { status: 503 });
   }
 
   const supabase = getSupabaseServerClient();
@@ -33,9 +32,8 @@ export async function GET(request) {
 export async function POST(request) {
   if (!isSupabaseServerConfigured()) {
     return NextResponse.json({
-      error: "Supabase not configured. Using client Demo Mode.",
-      isDemo: true,
-    });
+      error: "Supabase server is not configured.",
+    }, { status: 503 });
   }
 
   const supabase = getSupabaseServerClient();

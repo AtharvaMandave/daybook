@@ -66,34 +66,32 @@ export default function DashboardPage() {
     isPrivateMode,
   } = appState;
 
-  // Dynamic Reference Date (October 2026 for demo timeline, real date for live cloud user)
-  const referenceDate = appState.isDemoMode
-    ? new Date("2026-10-15T12:00:00")
-    : new Date();
+  // Real reference date
+  const referenceDate = new Date();
   const currentMonthStart = startOfMonth(referenceDate);
   const currentMonthEnd = endOfMonth(referenceDate);
 
   // 1. Net worth & liquid balances
-  const netWorthSummary = calculateNetWorth(accounts);
+  const netWorthSummary = calculateNetWorth(accounts || []);
 
   // 2. Period totals (transfers strictly excluded!)
   const periodTotals = calculatePeriodTotals(
-    transactions,
+    transactions || [],
     currentMonthStart,
     currentMonthEnd
   );
 
   // 3. Safe to Spend signature calculation
   const safeToSpendData = calculateSafeToSpend({
-    accounts,
+    accounts: accounts || [],
     paydayConfig: {
       isConfigured: profile?.isPaydayConfigured !== false,
       dayOfMonth: profile?.paydayDayOfMonth || 30,
       expectedPaydayIncome: profile?.expectedPaydayIncome || 0,
     },
     recurringBills: recurringRules || [],
-    plannedSavings: appState.isDemoMode ? [{ amount: 15000, name: "Index Fund SIP" }] : [],
-    recordedTransactions: transactions,
+    plannedSavings: (plannedEvents || []).filter((p) => p.type === "savings" || (p.category && p.category.toLowerCase().includes("sip"))),
+    recordedTransactions: transactions || [],
     referenceDate,
   });
 
@@ -106,32 +104,28 @@ export default function DashboardPage() {
   );
 
   // 5. Daily spending trend data
-  const chartData = appState.isDemoMode
-    ? [
-        { date: "Oct 1", spent: 4200 },
-        { date: "Oct 3", spent: 499 },
-        { date: "Oct 5", spent: 3990 },
-        { date: "Oct 7", spent: 1499 },
-        { date: "Oct 9", spent: 850 },
-        { date: "Oct 10", spent: 0 },
-        { date: "Oct 12", spent: 3200 },
-        { date: "Oct 14", spent: 2390 },
-        { date: "Oct 15", spent: 649 },
-      ]
-    : transactions.length > 0
-    ? Object.entries(
-        transactions
-          .filter((t) => t.type === "expense")
-          .reduce((acc, t) => {
-            const key = t.date?.slice(5) || "Today";
-            acc[key] = (acc[key] || 0) + Number(t.amount);
-            return acc;
-          }, {})
-      ).map(([date, spent]) => ({ date, spent }))
-    : [
+  const chartData = React.useMemo(() => {
+    const expenseTx = (transactions || []).filter((t) => {
+      if (t.type !== "expense") return false;
+      const d = new Date(t.date);
+      return d >= currentMonthStart && d <= currentMonthEnd;
+    });
+
+    if (expenseTx.length === 0) {
+      return [
         { date: "Start", spent: 0 },
         { date: "Today", spent: 0 },
       ];
+    }
+
+    const grouped = {};
+    for (const t of expenseTx) {
+      const dayLabel = format(new Date(t.date), "MMM d");
+      grouped[dayLabel] = (grouped[dayLabel] || 0) + Number(t.amount);
+    }
+
+    return Object.entries(grouped).map(([date, spent]) => ({ date, spent }));
+  }, [transactions, currentMonthStart, currentMonthEnd]);
 
   // 6. Recent transactions (latest 5)
   const recentTransactions = (transactions || []).slice(0, 5);
@@ -144,7 +138,7 @@ export default function DashboardPage() {
     ? profile.fullName.trim().split(" ")[0]
     : appState.user?.email
     ? appState.user.email.split("@")[0]
-    : "Friend";
+    : "there";
 
   return (
     <div className="space-y-6">
@@ -163,13 +157,13 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant={appState.isDemoMode ? "default" : "income"} className="text-xs py-1">
+          <Badge variant={appState.user ? "income" : "outline"} className="text-xs py-1">
             <span
               className={`h-1.5 w-1.5 rounded-full ${
-                appState.isDemoMode ? "bg-forest-600 animate-pulse" : "bg-emerald-600 animate-pulse"
+                appState.user ? "bg-emerald-600 animate-pulse" : "bg-forest-600"
               }`}
             />
-            {appState.isDemoMode ? "Demo Financial Engine" : "Cloud Ledger Active"}
+            {appState.user ? "Supabase Cloud Ledger" : "Local Ledger Active"}
           </Badge>
         </div>
       </div>
@@ -276,7 +270,7 @@ export default function DashboardPage() {
             <div>
               <CardTitle>Spending Trend</CardTitle>
               <p className="text-xs text-muted-foreground">
-                Daily expenditure across October 2026
+                Daily expenditure across {format(referenceDate, "MMMM yyyy")}
               </p>
             </div>
             <span className="text-xs text-muted-foreground font-mono">
@@ -345,43 +339,55 @@ export default function DashboardPage() {
             </Link>
           </CardHeader>
           <div className="space-y-4 pt-2">
-            {budgetProgress.slice(0, 4).map((b) => (
-              <div key={b.id} className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium text-foreground">{b.category}</span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="tabular-nums font-semibold text-foreground">
-                      {formatCurrency(b.spent, { isPrivate: isPrivateMode })}
+            {budgetProgress.length === 0 ? (
+              <div className="py-8 text-center text-xs text-muted-foreground">
+                <p>No budgets configured yet.</p>
+                <Link
+                  href="/budgets"
+                  className="mt-2 inline-block text-xs font-semibold text-forest-700 underline"
+                >
+                  Create your first budget &rarr;
+                </Link>
+              </div>
+            ) : (
+              budgetProgress.slice(0, 4).map((b) => (
+                <div key={b.id} className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-medium text-foreground">{b.category}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="tabular-nums font-semibold text-foreground">
+                        {formatCurrency(b.spent, { isPrivate: isPrivateMode })}
+                      </span>
+                      <span className="text-muted-foreground">
+                        / {formatCurrency(b.effectiveLimit, { isPrivate: isPrivateMode })}
+                      </span>
+                      {b.status === "warning" && (
+                        <AlertTriangle className="h-3 w-3 text-finance-warning" />
+                      )}
+                    </div>
+                  </div>
+                  {/* Progress bar */}
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-surface-muted">
+                    <div
+                      className={`h-full rounded-full transition-all duration-300 ${
+                        b.status === "exceeded"
+                          ? "bg-finance-expense"
+                          : b.status === "warning"
+                          ? "bg-finance-warning"
+                          : "bg-forest-500"
+                      }`}
+                      style={{ width: `${Math.min(100, b.percentage)}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[11px] text-muted-foreground">
+                    <span>{b.percentage}% used</span>
+                    <span>
+                      {formatCurrency(b.remaining, { isPrivate: isPrivateMode })} left
                     </span>
-                    <span className="text-muted-foreground">
-                      / {formatCurrency(b.effectiveLimit, { isPrivate: isPrivateMode })}
-                    </span>
-                    {b.status === "warning" && (
-                      <AlertTriangle className="h-3 w-3 text-finance-warning" />
-                    )}
                   </div>
                 </div>
-                {/* Progress bar */}
-                <div className="h-2 w-full overflow-hidden rounded-full bg-surface-muted">
-                  <div
-                    className={`h-full rounded-full transition-all duration-300 ${
-                      b.status === "exceeded"
-                        ? "bg-finance-expense"
-                        : b.status === "warning"
-                        ? "bg-finance-warning"
-                        : "bg-forest-500"
-                    }`}
-                    style={{ width: `${Math.min(100, b.percentage)}%` }}
-                  />
-                </div>
-                <div className="flex justify-between text-[11px] text-muted-foreground">
-                  <span>{b.percentage}% used</span>
-                  <span>
-                    {formatCurrency(b.remaining, { isPrivate: isPrivateMode })} left
-                  </span>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </Card>
       </div>
@@ -406,49 +412,58 @@ export default function DashboardPage() {
           </CardHeader>
 
           <div className="divide-y divide-border pt-1">
-            {recentTransactions.map((tx) => (
-              <div
-                key={tx.id}
-                className="flex items-center justify-between py-3 hover:bg-surface-warm/50 px-2 rounded transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-semibold ${
-                      tx.type === "expense"
-                        ? "bg-finance-expenseBg text-finance-expense"
-                        : tx.type === "income"
-                        ? "bg-finance-incomeBg text-finance-income"
-                        : "bg-finance-transferBg text-finance-transfer"
-                    }`}
-                  >
-                    {tx.type === "expense" ? "↓" : tx.type === "income" ? "↑" : "⇄"}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{tx.description}</p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{tx.category || "Transfer"}</span>
-                      <span>•</span>
-                      <span>{tx.date}</span>
+            {recentTransactions.length === 0 ? (
+              <div className="py-8 text-center text-xs text-muted-foreground">
+                <p>No transactions recorded yet this month.</p>
+                <p className="mt-1">
+                  Click <span className="font-semibold text-foreground">&ldquo;+ Quick Add&rdquo;</span> or press <kbd className="font-mono bg-surface-muted px-1.5 py-0.5 rounded text-[11px]">Ctrl+K</kbd> to record your first transaction.
+                </p>
+              </div>
+            ) : (
+              recentTransactions.map((tx) => (
+                <div
+                  key={tx.id}
+                  className="flex items-center justify-between py-3 hover:bg-surface-warm/50 px-2 rounded transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-semibold ${
+                        tx.type === "expense"
+                          ? "bg-finance-expenseBg text-finance-expense"
+                          : tx.type === "income"
+                          ? "bg-finance-incomeBg text-finance-income"
+                          : "bg-finance-transferBg text-finance-transfer"
+                      }`}
+                    >
+                      {tx.type === "expense" ? "↓" : tx.type === "income" ? "↑" : "⇄"}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{tx.description}</p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{tx.category || "Transfer"}</span>
+                        <span>•</span>
+                        <span>{tx.date}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="text-right">
-                  <span
-                    className={`text-sm font-semibold tabular-nums ${
-                      tx.type === "expense"
-                        ? "text-foreground"
-                        : tx.type === "income"
-                        ? "text-finance-income"
-                        : "text-muted-foreground"
-                    }`}
-                  >
-                    {formatSignedAmount(tx.amount, tx.type, isPrivateMode)}
-                  </span>
-                  <p className="text-[11px] text-muted-foreground">{tx.paymentMethod}</p>
+                  <div className="text-right">
+                    <span
+                      className={`text-sm font-semibold tabular-nums ${
+                        tx.type === "expense"
+                          ? "text-foreground"
+                          : tx.type === "income"
+                          ? "text-finance-income"
+                          : "text-muted-foreground"
+                      }`}
+                    >
+                      {formatSignedAmount(tx.amount, tx.type, isPrivateMode)}
+                    </span>
+                    <p className="text-[11px] text-muted-foreground">{tx.paymentMethod}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </Card>
 
@@ -458,7 +473,7 @@ export default function DashboardPage() {
             <div>
               <CardTitle>Upcoming Payments</CardTitle>
               <p className="text-xs text-muted-foreground">
-                Reserved before payday on Oct 30
+                Reserved before next payday
               </p>
             </div>
             <Link

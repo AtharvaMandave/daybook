@@ -34,8 +34,8 @@ import { QuickAddModal } from "@/components/transactions/quick-add-modal";
 
 export default function CalendarPage() {
   const [appState, setAppState] = useState(store.getState());
-  const [currentMonth, setCurrentMonth] = useState(new Date("2026-10-15T00:00:00"));
-  const [selectedDate, setSelectedDate] = useState(new Date("2026-10-15T00:00:00"));
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
 
   useEffect(() => {

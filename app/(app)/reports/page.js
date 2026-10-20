@@ -50,7 +50,7 @@ const CHART_PALETTE = [
 
 export default function ReportsPage() {
   const [appState, setAppState] = useState(store.getState());
-  const [timeRange, setTimeRange] = useState("oct_2026");
+  const [timeRange, setTimeRange] = useState("current_month");
 
   useEffect(() => {
     const unsubscribe = store.subscribe((newState) => {
@@ -63,20 +63,26 @@ export default function ReportsPage() {
 
   // Selected period interval
   const { periodStart, periodEnd, periodName } = useMemo(() => {
-    if (timeRange === "sep_2026") {
-      const d = new Date("2026-09-15");
+    const now = new Date();
+    if (timeRange === "last_month") {
+      const d = subMonths(now, 1);
       return {
         periodStart: startOfMonth(d),
         periodEnd: endOfMonth(d),
-        periodName: "September 2026",
+        periodName: format(d, "MMMM yyyy"),
+      };
+    } else if (timeRange === "all_time") {
+      return {
+        periodStart: new Date(2000, 0, 1),
+        periodEnd: new Date(2099, 11, 31),
+        periodName: "All Recorded Time",
       };
     }
-    // Default: October 2026
-    const d = new Date("2026-10-15");
+    // Default: current month
     return {
-      periodStart: startOfMonth(d),
-      periodEnd: endOfMonth(d),
-      periodName: "October 2026",
+      periodStart: startOfMonth(now),
+      periodEnd: endOfMonth(now),
+      periodName: format(now, "MMMM yyyy"),
     };
   }, [timeRange]);
 
@@ -158,10 +164,11 @@ export default function ReportsPage() {
           <Select
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value)}
-            className="w-40 h-9 text-xs"
+            className="w-44 h-9 text-xs"
           >
-            <option value="oct_2026">October 2026</option>
-            <option value="sep_2026">September 2026</option>
+            <option value="current_month">Current Month</option>
+            <option value="last_month">Previous Month</option>
+            <option value="all_time">All Time</option>
           </Select>
 
           <Button
